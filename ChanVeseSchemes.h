@@ -55,7 +55,6 @@ public:
 
 	inline double fdxplus(int i,int j,const field& phi, double hx) const
 	{
-		std::cout << "test 1 ter" <<std::endl;
 		 return (phi(i+1,j)-phi(i,j))/hx;
 	};
 

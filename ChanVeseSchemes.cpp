@@ -127,27 +127,24 @@ field ChanVeseSchemes::Correction(const field& phi, const double lambda1, const 
 field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const
 {
 
- 	double hx(1.0), hy(1.0);
+ 	double hx(1.0);
+	double hy(1.0);
 	const double eta(1e-8);
 
 	int nx(phi.rows());
 	int ny(phi.cols());
 
 	field correction = Correction(phi,l1,l2);
-	field transfophi;
+	field transfophi(nx,ny);
 
-	cout << "test 1" << nx << " " << ny << endl;
+	cout << "Taille nx et ny " << nx << " " << ny << endl;
 
-	for (int i=0; i<nx; ++i)
+	for (int i=2; i<nx-1; ++i)
 	{
-		for (int j=0; j<ny; ++j)
+		for (int j=2; j<ny-1; ++j)
 		{
-			cout << "test 1bis" << " " << fdxplus(i,j,phi,hx)  << " " << fdxplus(i,j,phi, hx) << " " << phi(100,100) << endl;
-
-  		double firstAterm = fdxplus(i,j,phi,hx)/(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
+			double firstAterm = fdxplus(i,j,phi,hx)/(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
 			double secondAterm = fdxminus(i,j,phi,hx)/(hx * sqrt(pow(eta,2) + pow(fdxplus(i-1,j,phi, hx),2) + pow((fdycentral(i-1,j,phi, hy)/2.),2)));
-
-				cout << "test 2" << endl;
 
 			double firstBterm = fdyplus(i,j,phi, hy)/(hy * sqrt(pow(eta,2) + pow(fdyplus(i,j,phi, hy),2) + pow(fdxcentral(i,j,phi, hx),2)));
 			double secondBterm = fdyminus(i,j,phi, hy)/(hx * sqrt(pow(eta,2) + pow(fdyplus(i,j-1,phi, hy),2) + pow(fdxcentral(i,j-1,phi, hx),2)));
@@ -156,12 +153,7 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 			double diracij;
 			diracij=eps/(phi(i,j)*phi(i,j)+eps*eps);
 
-				cout << "test 3" << endl;
-
 			transfophi(i,j) = phi(i,j) + dt*diracij*mu*(firstAterm+secondAterm+firstBterm+secondBterm) + dt*diracij*(nu + correction(i,j));
-
-				cout << "test 4" << endl;
-
 		}
 	}
   //
