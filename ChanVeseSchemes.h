@@ -18,6 +18,8 @@ class ChanVeseSchemes
 private:
 	// Image à segmenter
 	field _u0;
+	//double hx, hy;//, hy;
+
 
 
 public:
@@ -50,6 +52,37 @@ public:
 	// Schéma pour différences finis
 	// Explicit Scheme
 	field ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const;
+
+	inline double fdxplus(int i,int j,const field& phi, double hx) const
+	{
+		std::cout << "test 1 ter" <<std::endl;
+		 return (phi(i+1,j)-phi(i,j))/hx;
+	};
+
+	inline double fdxminus(int i,int j, const field& phi, double hx) const
+	{
+		return (phi(i,j)-phi(i-1,j))/hx;
+	};
+
+	inline double fdyplus(int i,int j, const field& phi, double hy) const
+	{
+		(phi(i,j+1)-phi(i,j))/hy;
+	};
+
+	inline double fdyminus(int i,int j, const field& phi, double hy) const
+	{
+		return (phi(i,j)-phi(i,j-1))/hy;
+	};
+
+	inline double fdxcentral(int i,int j, const field& phi, double hx) const
+	{
+		return (fdxplus(i,j,phi, hx)+fdxminus(i,j, phi,hx)) / 2.;
+	};
+
+	inline double fdycentral(int i,int j,const field& phi,double hy) const
+	{
+		return (fdyplus(i,j,phi, hy)+fdyminus(i,j,phi, hy)) / 2.;
+	};
 };
 
 #define _CHANVESESCHEMES_H
