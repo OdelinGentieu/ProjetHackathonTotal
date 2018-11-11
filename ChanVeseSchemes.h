@@ -18,6 +18,8 @@ class ChanVeseSchemes
 private:
 	// Image à segmenter
 	field _u0;
+	//double hx, hy;//, hy;
+
 
 
 public:
@@ -50,6 +52,48 @@ public:
 	// Schéma pour différences finis
 	// Explicit Scheme
 	field ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const;
+
+	inline double fdxplus(int i,int j,const field& phi, double hx) const
+	{
+		 return (phi(i+1,j)-phi(i,j))/hx;
+	};
+
+	inline double fdxminus(int i,int j, const field& phi, double hx) const
+	{
+		return (phi(i,j)-phi(i-1,j))/hx;
+	};
+
+	inline double fdyplus(int i,int j, const field& phi, double hy) const
+	{
+		(phi(i,j+1)-phi(i,j))/hy;
+	};
+
+	inline double fdyminus(int i,int j, const field& phi, double hy) const
+	{
+		return (phi(i,j)-phi(i,j-1))/hy;
+	};
+
+	inline double fdxcentral(int i,int j, const field& phi, double hx) const
+	{
+		return (fdxplus(i,j,phi, hx)+fdxminus(i,j, phi,hx)) / 2.;
+	};
+
+	inline double fdycentral(int i,int j,const field& phi,double hy) const
+	{
+		return (fdyplus(i,j,phi, hy)+fdyminus(i,j,phi, hy)) / 2.;
+	};
+
+	inline double coeffA(int i,int j,const field& phi,double hx, double hy, const double eta) const
+	{
+		return 1./(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
+	};
+
+	inline double coeffB(int i,int j,const field& phi,double hx, double hy, const double eta) const
+	{
+		return 1./(hy * sqrt(pow(eta,2) + pow(fdyplus(i,j,phi, hy),2) + pow(fdxcentral(i,j,phi, hx),2)));
+	};
+
+
 };
 
 #define _CHANVESESCHEMES_H

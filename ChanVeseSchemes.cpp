@@ -47,6 +47,9 @@ field ChanVeseSchemes::CSYMshift(const field& phi) const
 	field CSYM(nx,ny); CSYM.bottomRows(nx-1) = phi.topRows(nx-1); CSYM.row(0) = phi.row(nx-1);
 	return CSYM;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////:///
+
 field ChanVeseSchemes::CSXMYPshift(const field& phi) const
 {
 	int nx(phi.rows()), ny(phi.cols());
@@ -95,7 +98,7 @@ double ChanVeseSchemes::ComputeMeanValueOnDomain(const field& phi) const
 	field P = (phi>= 0).cast<double>();
 	double size_domain = fmax(P.sum(),1.e-6);
 	double zP = (_u0*P).sum();
-	return 1./size_domain*zP;
+	return zP/size_domain;
 }
 // Valeur moyenne sur le domaine complémentaire
 double ChanVeseSchemes::ComputeMeanValueOnComplementaryDomain(const field& phi) const
@@ -103,7 +106,7 @@ double ChanVeseSchemes::ComputeMeanValueOnComplementaryDomain(const field& phi) 
 	field Q = (phi<= 0).cast<double>();
 	double size_domain = fmax(Q.sum(),1.e-6);
 	double zQ = (_u0*Q).sum();
-	return 1./size_domain*zQ;
+	return zQ/size_domain;
 }
 
 field ChanVeseSchemes::Correction(const field& phi, const double lambda1, const double lambda2) const
@@ -118,34 +121,70 @@ field ChanVeseSchemes::Correction(const field& phi, const double lambda1, const 
 	field correc_term_2 = (_u0-Cmax)*(_u0-Cmax);
 	field correc_term = (-lambda1*correc_term_1+lambda2*correc_term_2);
 	return correc_term;
+
 }
 
 field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const
 {
-	const double hx(1.), hy(1.0);
+
+ 	double hx(1.0);
+	double hy(1.0);
 	const double eta(1e-8);
 
-	// Différences à gauche, à droite et centrées
-	field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
-	field dxminus = ( phi - CSXMshift(phi) ) / (hx);
-	field dyplus  = ( CSYPshift(phi) - phi ) / (hy);
-	field dyminus = ( phi - CSYMshift(phi) ) / (hy);
-	field dxcentral = (dxplus+dxminus) / 2.;
-	field dycentral = (dyplus+dyminus) / 2.;
+	int nx(phi.rows());
+	int ny(phi.cols());
 
-	field firstterm = dxplus/sqrt(eta*eta + dxplus*dxplus + dycentral*dycentral);
-	field secondterm = dyplus/sqrt(eta*eta + dyplus*dyplus + dxcentral*dxcentral);
-
-	// Courbure
-	field curvature =  (firstterm-CSXMshift(firstterm))/hx + (secondterm-CSYMshift(secondterm))/hy ;
-
-	// Dirac
-	field dirac = Dirac(phi);
-
-	// Terme correctif
 	field correction = Correction(phi,l1,l2);
+	field newphi(nx,ny);
 
-	return phi + dt*dirac*(mu*curvature-nu+correction);
+	cout << "Taille nx et ny " << nx << " " << ny << endl;
+
+
+
+	for (int i=1; i<nx-1; ++i)
+	{
+		// double firstterm = fdxplus(i,0,phi,hx)*coeffA + fdxminus(i,0,phi,hx)*coeffA;
+		// double secondterm = fdyplus(i,0,phi, hy)* coeffB(i,0,hx,hy,eta) + fdyminus(i,j,phi, hy)* coeffB(i,j-1,phi,hx,hy,eta);
+    //
+    // newphi(i,0) = phi(i,0) + dt*diracij*mu*(firstterm+secondterm) + dt*diracij*(nu + correction(i,0));
+
+		for (int j=1; j<ny-1; ++j)
+		{
+
+			double firstterm = fdxplus(i,j,phi,hx)*coeffA(i,j,phi,hx,hy,eta) + fdxminus(i,j,phi,hx)*coeffA(i-1,j,phi,hx,hy,eta);
+			double secondterm = fdyplus(i,j,phi, hy)* coeffB(i,j,phi,hx,hy,eta) + fdyminus(i,j,phi, hy)* coeffB(i,j-1,phi,hx,hy,eta);
+
+			double eps(3.);
+			double diracij;
+			diracij=eps/(phi(i,j)*phi(i,j)+eps*eps);
+
+			newphi(i,j) = phi(i,j) + dt*diracij*mu*(firstterm+secondterm) + dt*diracij*(nu + correction(i,j));
+		}
+	}
+  //
+	// // Différences à gauche, à droite et centrées
+	// field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
+	// field dxminus = ( phi - CSXMshift(phi) ) / (hx);
+	// field dyplus  = ( CSYPshift(phi) - phi ) / (hy);
+	// field dyminus = ( phi - CSYMshift(phi) ) / (hy);
+	// field dxcentral = (dxplus+dxminus) / 2.;
+	// field dycentral = (dyplus+dyminus) / 2.;
+  //
+	// field firstterm = dxplus/sqrt(eta*eta + dxplus*dxplus + dycentral*dycentral);
+	// field secondterm = dyplus/sqrt(eta*eta + dyplus*dyplus + dxcentral*dxcentral);
+  //
+	// // Courbure
+	// field curvature =  (firstterm-CSXMshift(firstterm))/hx + (secondterm-CSYMshift(secondterm))/hy ;
+  //
+	// // Dirac
+	// field dirac = Dirac(phi);
+  //
+	// // Terme correctif
+	// field correction = Correction(phi,l1,l2);
+  //
+	// return phi + dt*dirac*(mu*curvature-nu+correction);
+
+	return newphi;
 }
 
 
