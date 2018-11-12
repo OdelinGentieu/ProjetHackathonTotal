@@ -81,10 +81,10 @@ field ChanVeseSchemes::AbsGradPhi(const field& phi) const
 {
 	const double hx(1.), hy(1.0);
 
-	field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
-	field dxminus = ( phi - CSXMshift(phi) ) / (hx);
-	field dyplus  = ( CSYPshift(phi) - phi ) / (hy);
-	field dyminus = ( phi - CSYMshift(phi) ) / (hy);
+	field dxplus    = ( CSXPshift(phi) - phi ) / (hx);
+	field dxminus   = ( phi - CSXMshift(phi) ) / (hx);
+	field dyplus    = ( CSYPshift(phi) - phi ) / (hy);
+	field dyminus   = ( phi - CSYMshift(phi) ) / (hy);
 	field dxcentral = (dxplus+dxminus) / 2.;
 	field dycentral = (dyplus+dyminus) / 2.;
 
@@ -119,75 +119,71 @@ field ChanVeseSchemes::Correction(const field& phi, const double lambda1, const 
 	}
 	field correc_term_1 = (_u0-Cmin)*(_u0-Cmin);
 	field correc_term_2 = (_u0-Cmax)*(_u0-Cmax);
-	field correc_term = (-lambda1*correc_term_1+lambda2*correc_term_2);
+	field correc_term   = (-lambda1*correc_term_1+lambda2*correc_term_2);
 	return correc_term;
-
 }
 
 field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const
 {
 
- 	double hx(1.0);
+	double hx(1.0);
 	double hy(1.0);
 	const double eta(1e-8);
 
 	int nx(phi.rows());
 	int ny(phi.cols());
 
-
 	field correction = Correction(phi,l1,l2);
-	field transfophi(nx,ny);
 
 	cout << "Taille nx et ny " << nx << " " << ny << endl;
 
-	for (int i=2; i<nx-1; ++i)
+
+	// DEBUT GROS TABLEAU
+
+	field GrosPhi(nx+2,ny+2);
+	field newphi(nx,ny);
+
+	cout << "Taille new " << newphi.rows() << " " << newphi.cols() << " et l'enrobé " << GrosPhi.rows() << " " << GrosPhi.cols() << endl;
+	cout << GrosPhi(0,0) << endl;
+
+	for (int j=1; j<ny+1; ++j)
 	{
-		for (int j=2; j<ny-1; ++j)
+		GrosPhi(0,j)    = phi(nx-1,j-1);
+		GrosPhi(nx+1,j) = phi(0,j-1);
+	}
+
+	for (int i=1; i<nx+1; ++i)
+	{
+		GrosPhi(i,0)    = phi(i-1,ny-1);
+		GrosPhi(i,ny+1) = phi(i-1,0);
+		for (int j=1; j<ny+1; ++j)
 		{
-			double firstAterm = fdxplus(i,j,phi,hx)/(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
-			double secondAterm = fdxminus(i,j,phi,hx)/(hx * sqrt(pow(eta,2) + pow(fdxplus(i-1,j,phi, hx),2) + pow((fdycentral(i-1,j,phi, hy)/2.),2)));
-
-			double firstBterm = fdyplus(i,j,phi, hy)/(hy * sqrt(pow(eta,2) + pow(fdyplus(i,j,phi, hy),2) + pow(fdxcentral(i,j,phi, hx),2)));
-			double secondBterm = fdyminus(i,j,phi, hy)/(hx * sqrt(pow(eta,2) + pow(fdyplus(i,j-1,phi, hy),2) + pow(fdxcentral(i,j-1,phi, hx),2)));
-
-			double eps(3.);
-			double diracij;
-			diracij=eps/(phi(i,j)*phi(i,j)+eps*eps);
-
-			transfophi(i,j) = phi(i,j) + dt*diracij*mu*(firstAterm+secondAterm+firstBterm+secondBterm) + dt*diracij*(nu + correction(i,j));
-
-
-	
+			GrosPhi(i,j)  = phi(i-1,j-1);
 		}
 	}
-  //
-	// // Différences à gauche, à droite et centrées
-	// field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
-	// field dxminus = ( phi - CSXMshift(phi) ) / (hx);
-	// field dyplus  = ( CSYPshift(phi) - phi ) / (hy);
-	// field dyminus = ( phi - CSYMshift(phi) ) / (hy);
-	// field dxcentral = (dxplus+dxminus) / 2.;
-	// field dycentral = (dyplus+dyminus) / 2.;
-  //
-	// field firstterm = dxplus/sqrt(eta*eta + dxplus*dxplus + dycentral*dycentral);
-	// field secondterm = dyplus/sqrt(eta*eta + dyplus*dyplus + dxcentral*dxcentral);
-  //
-	// // Courbure
-	// field curvature =  (firstterm-CSXMshift(firstterm))/hx + (secondterm-CSYMshift(secondterm))/hy ;
-  //
-	// // Dirac
-	// field dirac = Dirac(phi);
-  //
-	// // Terme correctif
-	// field correction = Correction(phi,l1,l2);
-  //
-	// return phi + dt*dirac*(mu*curvature-nu+correction);
+
+	cout << "test1" << endl;
+	//FIN GrosPhi
+	for (int i=1; i<nx+1; ++i)
+	{
+		for (int j=1; j<ny+1; ++j)
+		{
+			double firstterm  = fdxplus(i,j,GrosPhi,hx)*coeffA(i,j,GrosPhi,hx,hy,eta) + fdxminus(i,j,GrosPhi,hx)*coeffA(i-1,j,GrosPhi,hx,hy,eta);
+			double secondterm = fdyplus(i,j,GrosPhi,hy)*coeffB(i,j,GrosPhi,hx,hy,eta) + fdyminus(i,j,GrosPhi,hy)*coeffB(i,j-1,GrosPhi,hx,hy,eta);
+			cout << "test2" << endl;
+			double eps(3.);
+			double diracij;
+			diracij = eps/(GrosPhi(i,j)*GrosPhi(i,j)+eps*eps);
+			cout << "test3" << endl;
+			newphi(i-1,j-1) = GrosPhi(i,j) + dt*diracij*mu*(firstterm+secondterm) + dt*diracij*(nu + correction(i-1,j-1));
+
+			cout << "test4" << endl;
+		}
+	}
 
 
-	cout << "test 6" << endl;
 
-	return transfophi;
-
+	return newphi;
 }
 
 
