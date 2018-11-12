@@ -134,6 +134,7 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 	int nx(phi.rows());
 	int ny(phi.cols());
 
+
 	field correction = Correction(phi,l1,l2);
 	field transfophi(nx,ny);
 
@@ -154,6 +155,9 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 			diracij=eps/(phi(i,j)*phi(i,j)+eps*eps);
 
 			transfophi(i,j) = phi(i,j) + dt*diracij*mu*(firstAterm+secondAterm+firstBterm+secondBterm) + dt*diracij*(nu + correction(i,j));
+
+
+	
 		}
 	}
   //
@@ -179,9 +183,11 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
   //
 	// return phi + dt*dirac*(mu*curvature-nu+correction);
 
+
 	cout << "test 6" << endl;
 
 	return transfophi;
+
 }
 
 

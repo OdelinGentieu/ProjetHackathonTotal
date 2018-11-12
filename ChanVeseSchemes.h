@@ -82,6 +82,7 @@ public:
 	{
 		return (fdyplus(i,j,phi, hy)+fdyminus(i,j,phi, hy)) / 2.;
 	};
+
 };
 
 #define _CHANVESESCHEMES_H
