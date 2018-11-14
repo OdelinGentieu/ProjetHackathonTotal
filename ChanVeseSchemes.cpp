@@ -122,56 +122,101 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
   const double hx(1.), hy(1.0);
   const double eta(1e-8);
 
-	int nx(phi.rows());
-	int ny(phi.cols());
+  int nx(phi.rows());
+  int ny(phi.cols());
 
 
-	field GrosPhi(nx+2,ny+2);
-	field newphi(nx,ny);
+  field GrosPhi(nx+2,ny+2);
+  field newphi(nx,ny);
 
-	field correction = Correction(phi,l1,l2);
+  field correction = Correction(phi,l1,l2);
 
-	//DEBUT GrosPhi
 
-		for (int j=1; j<ny+1; ++j)
-		{
-			GrosPhi(0,j)    = phi(0,j-1);
-			GrosPhi(nx+1,j) = phi(nx-1,j-1);
-		}
+  //------------------------------------------------------------------------
+  // Calcul de C1 et C2
+  //-------------------------------------------------------------------------
+  double dom_plus=0., dom_moins=0, z_plus=0., z_moins=0., C1, C2;
 
-		for (int i=1; i<nx+1; ++i)
-		{
-			GrosPhi(i,0)    = phi(i-1,0);
-			GrosPhi(i,ny+1) = phi(i-1,ny-1);
-			for (int j=1; j<ny+1; ++j)
-			{
-				GrosPhi(i,j)  = phi(i-1,j-1);
-			}
-		}
-
-		GrosPhi(0,0)       = phi(0,0);
-		GrosPhi(0,ny+1)    = phi(0,ny-1);
-		GrosPhi(nx+1,0)    = phi(nx-1,0);
-		GrosPhi(nx+1,ny+1) = phi(nx-1,ny-1);
-
-		//FIN GrosPhi
-
-	for (int i=1; i<nx+1; ++i)
+  for (int i=0; i<nx ; i++)
+    {
+      for (int j=0; j<ny ; j++)
 	{
-		for (int j=1; j<ny+1; ++j)
-		{
-			double firstterm  = (fdxplus(i,j,GrosPhi,hx)*coeffA(i,j,GrosPhi,hx,hy,eta) - fdxminus(i,j,GrosPhi,hx)*coeffA(i-1,j,GrosPhi,hx,hy,eta))/hx;
-			double secondterm = (fdyplus(i,j,GrosPhi,hy)*coeffB(i,j,GrosPhi,hx,hy,eta) - fdyminus(i,j,GrosPhi,hy)*coeffB(i,j-1,GrosPhi,hx,hy,eta))/hy;
-			double eps(3.);
-			double diracij;
-			diracij = eps/(GrosPhi(i,j)*GrosPhi(i,j)+eps*eps);
-			newphi(i-1,j-1) = GrosPhi(i,j) + dt*diracij*(mu*(firstterm+secondterm)- nu + correction(i-1,j-1));
-		}
+	  dom_plus += max (phi(i,j)/max(abs(phi(i,j)),1.E-16),0.);
+	  dom_moins -= max (-phi(i,j)/max(abs(phi(i,j)),1.E-16),0.);
+	  //le max au dénominateur sert à ne jamais diviser par 0
+	  //dom_plus est le nombre d'éléments positifs dans phi
+	  //dom_moins est le nombre d'éléments négatifs dans phi
+	  z_plus += max (_u0(i,j)*phi(i,j)/max(abs(phi(i,j)),1.E-16),0.);
+	  z_moins -= max (-_u0(i,j)*phi(i,j)/max(abs(phi(i,j)),1.E-16),0.);
+	  //z_plus est la valeur de l'intégrale de z sur tous les phi(i,j) positifs
+	  //z_moins est la valeur de l'intégrale de z sur tous les phi(i,j) négatifs
 	}
+    }
+  C1 = z_plus/dom_plus;
+  C2 = z_moins/dom_moins;
 
-	return newphi;
+  //Verif de notre calcul :------------------------
+  // double C1_ex,C2_ex;
+  // C1_ex = ComputeMeanValueOnDomain(phi);
+  // C2_ex = ComputeMeanValueOnComplementaryDomain(phi);
+  // cout <<"C1, C1_ex, C2, C2_ex" << C1<<" " << C1_ex << C2 <<" " << C2_ex<<endl;
+  // cout <<"diff (C1,C2)"<< C1-C1_ex<<" "<< C2-C2_ex<<endl;
+  //------------------------------------------------
 
-////////////////// OLD STAFF ///////////////////
+  if (C1 < C2) // On sait pas trop pourquoi mais c'était fait comme ça dans la version précédente, donc on a fait pareil
+    {
+      double temp = C2;
+      C2 = C1; C1 = temp;
+    }
+  //-------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
+  
+
+
+
+  
+  //DEBUT GrosPhi
+
+  for (int j=1; j<ny+1; ++j)
+    {
+      GrosPhi(0,j)    = phi(0,j-1);
+      GrosPhi(nx+1,j) = phi(nx-1,j-1);
+    }
+
+  for (int i=1; i<nx+1; ++i)
+    {
+      GrosPhi(i,0)    = phi(i-1,0);
+      GrosPhi(i,ny+1) = phi(i-1,ny-1);
+      for (int j=1; j<ny+1; ++j)
+	{
+	  GrosPhi(i,j)  = phi(i-1,j-1);
+	}
+    }
+
+  GrosPhi(0,0)       = phi(0,0);
+  GrosPhi(0,ny+1)    = phi(0,ny-1);
+  GrosPhi(nx+1,0)    = phi(nx-1,0);
+  GrosPhi(nx+1,ny+1) = phi(nx-1,ny-1);
+
+  //FIN GrosPhi
+
+  for (int i=1; i<nx+1; ++i)
+    {
+      for (int j=1; j<ny+1; ++j)
+	{
+	  double firstterm  = (fdxplus(i,j,GrosPhi,hx)*coeffA(i,j,GrosPhi,hx,hy,eta) - fdxminus(i,j,GrosPhi,hx)*coeffA(i-1,j,GrosPhi,hx,hy,eta))/hx;
+	  double secondterm = (fdyplus(i,j,GrosPhi,hy)*coeffB(i,j,GrosPhi,hx,hy,eta) - fdyminus(i,j,GrosPhi,hy)*coeffB(i,j-1,GrosPhi,hx,hy,eta))/hy;
+	  double eps(3.);
+	  double diracij;
+	  double correc = -l1*(_u0(i-1,j-1)-C1)*(_u0(i-1,j-1)-C1) + l2*(_u0(i-1,j-1)-C2)*(_u0(i-1,j-1)-C2);
+	  diracij = eps/(GrosPhi(i,j)*GrosPhi(i,j)+eps*eps);
+	  newphi(i-1,j-1) = GrosPhi(i,j) + dt*diracij*(mu*(firstterm+secondterm)- nu + correc);
+	}
+    }
+
+  return newphi;
+
+  ////////////////// OLD STAFF ///////////////////
 
   // // Différences à gauche, à droite et centrées
   // field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
@@ -185,21 +230,21 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
   // field secondterm = dyplus/sqrt(eta*eta + dyplus*dyplus + dxcentral*dxcentral);
   //
   // // Courbure
-	// field curvature =  (firstterm-CSXMshift(firstterm))/hx + (secondterm-CSYMshift(secondterm))/hy ;
+  // field curvature =  (firstterm-CSXMshift(firstterm))/hx + (secondterm-CSYMshift(secondterm))/hy ;
   //
   // // Dirac
   // field dirac = Dirac(phi);
   //
-	// // Terme correctif
-	// field correction = Correction(phi,l1,l2);
+  // // Terme correctif
+  // field correction = Correction(phi,l1,l2);
   //
   //
   // newphi = phi + dt*dirac*(mu*curvature-nu+correction);
   //
-	// cout << newphi(0,0) << " " << newphi(0,1) << " " << newphi(1,0) << " " << newphi(1,1) << endl;
-	// cout << "Dirac " << dirac(0,0) << endl;
+  // cout << newphi(0,0) << " " << newphi(0,1) << " " << newphi(1,0) << " " << newphi(1,1) << endl;
+  // cout << "Dirac " << dirac(0,0) << endl;
   //
-	// return newphi;
+  // return newphi;
 }
 
 

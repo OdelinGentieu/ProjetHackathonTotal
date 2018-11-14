@@ -383,9 +383,17 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
     if (floor(i*100/Nx)>pourcentage)
     {
       pourcentage=pourcentage+1;
-      if (((pourcentage%10)==0) && (me==0))
+      if (me==0)
       {
-        std::cout << pourcentage << "% de l'image filtree" << '\n';
+	int i_barre;
+	printf( "[" );
+	for(i_barre=0;i_barre<=pourcentage;i_barre+=2) printf( "*" );
+	for (;i_barre<=100; i_barre+=2 ) printf( "-" );
+	printf( "] %3d %%", pourcentage );
+
+	for(i_barre=0;i_barre<59;++i_barre) printf( "%c", 8 );
+
+	fflush(stdout );
       }
     }
   }
