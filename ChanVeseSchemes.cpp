@@ -1,4 +1,4 @@
-x// created by Gabriel Balestre, Stéphanie Lyon, Nathan Paillou, Théo Robushi
+// created by Gabriel Balestre, Stéphanie Lyon, Nathan Paillou, Théo Robushi
 // supervised by Annabelle Collin and Heloise Beaugendre
 // 2017/18
 
@@ -125,42 +125,43 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 	int nx(phi.rows());
 	int ny(phi.cols());
 
-	field correction = Correction(phi,l1,l2);
 
 	field GrosPhi(nx+2,ny+2);
 	field newphi(nx,ny);
 
-//DEBUT GrosPhi
+	field correction = Correction(phi,l1,l2);
 
-	for (int j=1; j<ny+1; ++j)
-	{
-		GrosPhi(0,j)    = phi(nx-1,j-1);
-		GrosPhi(nx+1,j) = phi(0,j-1);
-	}
+	//DEBUT GrosPhi
 
-	for (int i=1; i<nx+1; ++i)
-	{
-		GrosPhi(i,0)    = phi(i-1,ny-1);
-		GrosPhi(i,ny+1) = phi(i-1,0);
 		for (int j=1; j<ny+1; ++j)
 		{
-			GrosPhi(i,j)  = phi(i-1,j-1);
+			GrosPhi(0,j)    = phi(0,j-1);
+			GrosPhi(nx+1,j) = phi(nx-1,j-1);
 		}
-	}
 
-	GrosPhi(0,0)       = phi(nx-1,ny-1);
-	GrosPhi(0,ny+1)    = phi(nx-1,0);
-	GrosPhi(nx+1,0)    = phi(0,ny-1);
-	GrosPhi(nx+1,ny+1) = phi(0,0);
+		for (int i=1; i<nx+1; ++i)
+		{
+			GrosPhi(i,0)    = phi(i-1,0);
+			GrosPhi(i,ny+1) = phi(i-1,ny-1);
+			for (int j=1; j<ny+1; ++j)
+			{
+				GrosPhi(i,j)  = phi(i-1,j-1);
+			}
+		}
 
-	//FIN GrosPhi
+		GrosPhi(0,0)       = phi(0,0);
+		GrosPhi(0,ny+1)    = phi(0,ny-1);
+		GrosPhi(nx+1,0)    = phi(nx-1,0);
+		GrosPhi(nx+1,ny+1) = phi(nx-1,ny-1);
+
+		//FIN GrosPhi
 
 	for (int i=1; i<nx+1; ++i)
 	{
 		for (int j=1; j<ny+1; ++j)
 		{
-			double firstterm  = fdxplus(i,j,GrosPhi,hx)*coeffA(i,j,GrosPhi,hx,hy,eta) - fdxminus(i,j,GrosPhi,hx)*coeffA(i-1,j,GrosPhi,hx,hy,eta);
-			double secondterm = fdyplus(i,j,GrosPhi,hy)*coeffB(i,j,GrosPhi,hx,hy,eta) - fdyminus(i,j,GrosPhi,hy)*coeffB(i,j-1,GrosPhi,hx,hy,eta);
+			double firstterm  = (fdxplus(i,j,GrosPhi,hx)*coeffA(i,j,GrosPhi,hx,hy,eta) - fdxminus(i,j,GrosPhi,hx)*coeffA(i-1,j,GrosPhi,hx,hy,eta))/hx;
+			double secondterm = (fdyplus(i,j,GrosPhi,hy)*coeffB(i,j,GrosPhi,hx,hy,eta) - fdyminus(i,j,GrosPhi,hy)*coeffB(i,j-1,GrosPhi,hx,hy,eta))/hy;
 			double eps(3.);
 			double diracij;
 			diracij = eps/(GrosPhi(i,j)*GrosPhi(i,j)+eps*eps);
@@ -192,7 +193,13 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 	// // Terme correctif
 	// field correction = Correction(phi,l1,l2);
   //
-  // return phi + dt*dirac*(mu*curvature-nu+correction);
+  //
+  // newphi = phi + dt*dirac*(mu*curvature-nu+correction);
+  //
+	// cout << newphi(0,0) << " " << newphi(0,1) << " " << newphi(1,0) << " " << newphi(1,1) << endl;
+	// cout << "Dirac " << dirac(0,0) << endl;
+  //
+	// return newphi;
 }
 
 
