@@ -7,7 +7,6 @@
  * redistancing max_iter times
  *
  */
-
 void LevelSet::redistancing(const int max_iter)
 {
     field phi0 = _phi;

@@ -18,8 +18,6 @@ class ChanVeseSchemes
 private:
 	// Image à segmenter
 	field _u0;
-	//double hx, hy;//, hy;
-
 
 
 public:
@@ -39,7 +37,6 @@ public:
 
 	// Valeur moyenne du domaine
 	double ComputeMeanValueOnDomain(const field& phi) const;
-
 	// Valeur moyenne sur le domaine complémentaire
 	double ComputeMeanValueOnComplementaryDomain(const field& phi) const;
 
@@ -85,14 +82,13 @@ public:
 
 	inline double coeffA(int i,int j,const field& phi,double hx, double hy, const double eta) const
 	{
-		return 1./(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
+		return 1./(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow(fdycentral(i,j,phi, hy),2)));
 	};
 
 	inline double coeffB(int i,int j,const field& phi,double hx, double hy, const double eta) const
 	{
 		return 1./(hy * sqrt(pow(eta,2) + pow(fdyplus(i,j,phi, hy),2) + pow(fdxcentral(i,j,phi, hx),2)));
 	};
-
 
 };
 
