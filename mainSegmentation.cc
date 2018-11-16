@@ -69,7 +69,8 @@ int main(int argc, char** argv)
   if (scheme == "ExplicitScheme")
   {
     std::cout << "Explicit scheme" << std::endl;
-    newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+    // newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2); //TODO surcharge d'opérateur avec un seul Explicit scheme
+    newphi = chanVese->ExplicitSchemeGPU(phi,c.dt,c.mu,c.nu,c.l1,c.l2,c.stencil);
   }
   else
   {
@@ -86,7 +87,8 @@ int main(int argc, char** argv)
     if (i%10 == 0) { std::cout << "Iteration -- " << i << std::endl;}
     if (scheme == "ExplicitScheme")
     {
-      newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+      // newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+      newphi = chanVese->ExplicitSchemeGPU(phi,c.dt,c.mu,c.nu,c.l1,c.l2,c.stencil);
     }
 
     diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()

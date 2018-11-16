@@ -50,44 +50,44 @@ public:
 	// Explicit Scheme
 	field ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const;
 
-	inline double fdxplus(int i,int j,const field& GrosPhi, double hx) const
+	inline double fdxplus(int i,int j,const field& Phi, double hx) const
 	{
-		 return (GrosPhi(i+1,j)-GrosPhi(i,j))/hx;
+		 return (Phi(i+1,j)-Phi(i,j))/hx;
 	};
 
-	inline double fdxminus(int i,int j, const field& GrosPhi, double hx) const
+	inline double fdxminus(int i,int j, const field& Phi, double hx) const
 	{
-		return (GrosPhi(i,j)-GrosPhi(i-1,j))/hx;
+		return (Phi(i,j)-Phi(i-1,j))/hx;
 	};
 
-	inline double fdyplus(int i,int j, const field& GrosPhi, double hy) const
+	inline double fdyplus(int i,int j, const field& Phi, double hy) const
 	{
-		return (GrosPhi(i,j+1)-GrosPhi(i,j))/hy;
+		return (Phi(i,j+1)-Phi(i,j))/hy;
 	};
 
-	inline double fdyminus(int i,int j, const field& GrosPhi, double hy) const
+	inline double fdyminus(int i,int j, const field& Phi, double hy) const
 	{
-		return (GrosPhi(i,j)-GrosPhi(i,j-1))/hy;
+		return (Phi(i,j)-Phi(i,j-1))/hy;
 	};
 
-	inline double fdxcentral(int i,int j, const field& GrosPhi, double hx) const
+	inline double fdxcentral(int i,int j, const field& Phi, double hx) const
 	{
-		return (fdxplus(i,j,GrosPhi, hx)+fdxminus(i,j, GrosPhi,hx)) / 2.;
+		return (fdxplus(i,j,Phi, hx)+fdxminus(i,j, Phi,hx)) / 2.;
 	};
 
-	inline double fdycentral(int i,int j,const field& GrosPhi,double hy) const
+	inline double fdycentral(int i,int j,const field& Phi,double hy) const
 	{
-		return (fdyplus(i,j,GrosPhi, hy)+fdyminus(i,j,GrosPhi, hy)) / 2.;
+		return (fdyplus(i,j,Phi, hy)+fdyminus(i,j,Phi, hy)) / 2.;
 	};
 
-	inline double coeffA(int i,int j,const field& GrosPhi,double hx, double hy, const double eta) const
+	inline double coeffA(int i,int j,const field& Phi,double hx, double hy, const double eta) const
 	{
-		return 1./(sqrt(pow(eta,2) + pow(fdxplus(i,j,GrosPhi, hx),2) + pow(fdycentral(i,j,GrosPhi, hy),2)));
+		return 1./(sqrt(pow(eta,2) + pow(fdxplus(i,j,Phi, hx),2) + pow(fdycentral(i,j,Phi, hy),2)));
 	};
 
-	inline double coeffB(int i,int j,const field& GrosPhi,double hx, double hy, const double eta) const
+	inline double coeffB(int i,int j,const field& Phi,double hx, double hy, const double eta) const
 	{
-		return 1./(sqrt(pow(eta,2) + pow(fdyplus(i,j,GrosPhi, hy),2) + pow(fdxcentral(i,j,GrosPhi, hx),2)));
+		return 1./(sqrt(pow(eta,2) + pow(fdyplus(i,j,Phi, hy),2) + pow(fdxcentral(i,j,Phi, hx),2)));
 	};
 
 };
