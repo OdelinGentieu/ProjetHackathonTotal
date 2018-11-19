@@ -1,5 +1,6 @@
 # Compilateur Utilisé
 CC = mpic++
+ACC = pgc++  -Mmpi=mpich -fast -acc -ta=nvidia:cc2+,cuda5.5,fastmath
 
 # Options en mode optimisé - La variable DEBUG est définie comme fausse
 OPTIM_FLAG = -O3 -DNDEBUG -w -I Eigen/Eigen -std=c++11
@@ -26,8 +27,10 @@ SRCCompilSegmen = mainSegmentation.o LevelSet.o InitMask.o ChanVeseSchemes.o Ima
 
 # La commande complète : compile seulement si un fichier a été modifié
 $(PROGSegmentation) : $(SRC) $(SRCMainSegmen)
-	$(CC) -c $(SRC) $(SRCMainSegmen) $(CXX_FLAGS)
-	$(CC) -o $(PROGSegmentation) $(SRCCompilSegmen) $(LIB)
+#	$(CC) -c $(SRC) $(SRCMainSegmen) $(CXX_FLAGS)
+#	$(CC) -o $(PROGSegmentation) $(SRCCompilSegmen) $(LIB)
+	$(ACC) -c $(SRC) $(SRCMainSegmen)
+	$(ACC) -o $(PROGSegmentation) $(SRCCompilSegmen) $(LIB)
 
 $(PROGFilter) : $(SRC) $(SRCMainFilter)
 	$(CC) -c $(SRC) $(SRCMainFilter) $(CXX_FLAGS)
