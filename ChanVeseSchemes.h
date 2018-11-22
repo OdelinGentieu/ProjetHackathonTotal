@@ -18,8 +18,6 @@ class ChanVeseSchemes
 private:
 	// Image à segmenter
 	field _u0;
-	//double hx, hy;//, hy;
-
 
 
 public:
@@ -39,7 +37,6 @@ public:
 
 	// Valeur moyenne du domaine
 	double ComputeMeanValueOnDomain(const field& phi) const;
-
 	// Valeur moyenne sur le domaine complémentaire
 	double ComputeMeanValueOnComplementaryDomain(const field& phi) const;
 
@@ -53,46 +50,45 @@ public:
 	// Explicit Scheme
 	field ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const;
 
-	inline double fdxplus(int i,int j,const field& phi, double hx) const
+	inline double fdxplus(int i,int j,const field& GrosPhi, double hx) const
 	{
-		 return (phi(i+1,j)-phi(i,j))/hx;
+		 return (GrosPhi(i+1,j)-GrosPhi(i,j))/hx;
 	};
 
-	inline double fdxminus(int i,int j, const field& phi, double hx) const
+	inline double fdxminus(int i,int j, const field& GrosPhi, double hx) const
 	{
-		return (phi(i,j)-phi(i-1,j))/hx;
+		return (GrosPhi(i,j)-GrosPhi(i-1,j))/hx;
 	};
 
-	inline double fdyplus(int i,int j, const field& phi, double hy) const
+	inline double fdyplus(int i,int j, const field& GrosPhi, double hy) const
 	{
-		(phi(i,j+1)-phi(i,j))/hy;
+		return (GrosPhi(i,j+1)-GrosPhi(i,j))/hy;
 	};
 
-	inline double fdyminus(int i,int j, const field& phi, double hy) const
+	inline double fdyminus(int i,int j, const field& GrosPhi, double hy) const
 	{
-		return (phi(i,j)-phi(i,j-1))/hy;
+		return (GrosPhi(i,j)-GrosPhi(i,j-1))/hy;
 	};
 
-	inline double fdxcentral(int i,int j, const field& phi, double hx) const
+	inline double fdxcentral(int i,int j, const field& GrosPhi, double hx) const
 	{
-		return (fdxplus(i,j,phi, hx)+fdxminus(i,j, phi,hx)) / 2.;
+		return (fdxplus(i,j,GrosPhi, hx)+fdxminus(i,j, GrosPhi,hx)) / 2.;
 	};
 
-	inline double fdycentral(int i,int j,const field& phi,double hy) const
+	inline double fdycentral(int i,int j,const field& GrosPhi,double hy) const
 	{
-		return (fdyplus(i,j,phi, hy)+fdyminus(i,j,phi, hy)) / 2.;
+		return (fdyplus(i,j,GrosPhi, hy)+fdyminus(i,j,GrosPhi, hy)) / 2.;
 	};
 
-	inline double coeffA(int i,int j,const field& phi,double hx, double hy, const double eta) const
+	inline double coeffA(int i,int j,const field& GrosPhi,double hx, double hy, const double eta) const
 	{
-		return 1./(hx * sqrt(pow(eta,2) + pow(fdxplus(i,j,phi, hx),2) + pow((fdycentral(i,j,phi, hy)/2.),2)));
+		return 1./(sqrt(pow(eta,2) + pow(fdxplus(i,j,GrosPhi, hx),2) + pow(fdycentral(i,j,GrosPhi, hy),2)));
 	};
 
-	inline double coeffB(int i,int j,const field& phi,double hx, double hy, const double eta) const
+	inline double coeffB(int i,int j,const field& GrosPhi,double hx, double hy, const double eta) const
 	{
-		return 1./(hy * sqrt(pow(eta,2) + pow(fdyplus(i,j,phi, hy),2) + pow(fdxcentral(i,j,phi, hx),2)));
+		return 1./(sqrt(pow(eta,2) + pow(fdyplus(i,j,GrosPhi, hy),2) + pow(fdxcentral(i,j,GrosPhi, hx),2)));
 	};
-
 
 };
 

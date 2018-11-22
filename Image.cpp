@@ -385,15 +385,15 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
       pourcentage=pourcentage+1;
       if (me==0)
       {
-         int i_barre;
-	       printf( "[" );
-	       for(i_barre=0;i_barre<=pourcentage;i_barre+=2) printf( "*" );
-	       for (;i_barre<=100; i_barre+=2 ) printf( "-" );
-	       printf( "] %3d %%", pourcentage );
+	int i_barre;
+	printf( "[" );
+	for(i_barre=0;i_barre<=pourcentage;i_barre+=2) printf( "*" );
+	for (;i_barre<=100; i_barre+=2 ) printf( "-" );
+	printf( "] %3d %%", pourcentage );
 
-	       for(i_barre=0;i_barre<59;++i_barre) printf( "%c", 8 );
+	for(i_barre=0;i_barre<59;++i_barre) printf( "%c", 8 );
 
-	       fflush(stdout );
+	fflush(stdout );
       }
     }
   }
@@ -477,9 +477,7 @@ void Image::WriteImage(const field& abs_grad_phi, std::string filename)
     {
       v[i] = full(i,j);
     }
-    //TIFFScanline(tif, v, j);
-    TIFFReadScanline(tif, v, j);
-
+    TIFFWriteScanline(tif, v, j);
   }
   TIFFClose(tif);
 }
@@ -529,8 +527,6 @@ double Image::Median(std::vector<double> & v)
   }
   return v[n/2];
 }
-
-
 
 #define _IMAGE_CPP
 #endif

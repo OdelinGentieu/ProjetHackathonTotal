@@ -7,22 +7,37 @@
  * redistancing max_iter times
  *
  */
-
 void LevelSet::redistancing(const int max_iter)
 {
     field phi0 = _phi;
     field phin = _phi;
 
-    int iter = 0;
-    if (max_iter > 20) {std::cout << "Progression " << std::endl;;}
+    int iter = 0, pourcentage =0;
+    
     while (iter<max_iter)
-    {
+      {
         firstOrderUpwind(_phi, phi0, .5*1);
         phin = _phi;
-        if ( (iter%10==0) && (max_iter > 20) )
-           std::cout << iter/(1.*max_iter)*100. << "% " << std::endl;;
-        iter++;
-    }
+       
+	if ((floor(iter*100/max_iter)>=pourcentage)&&(max_iter>20))
+	  {
+	    pourcentage=pourcentage+1;
+	    
+	    int i_barre;
+	    printf( "[" );
+	    for(i_barre=0;i_barre<=pourcentage;i_barre+=2) printf( "*" );
+	    for (;i_barre<=100; i_barre+=2 ) printf( "-" );
+	    printf( "] %3d %%", pourcentage );
+
+	    for(i_barre=0;i_barre<59;++i_barre) printf( "%c", 8 );
+
+	    fflush(stdout );
+	      
+	  }
+	
+        iter++;	
+      }
+    
     if (max_iter > 20) {std::cout << std::endl;}
 }
 

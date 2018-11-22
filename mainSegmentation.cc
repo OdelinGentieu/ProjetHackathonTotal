@@ -6,10 +6,10 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-//#include "Image.h"
+#include "Image.h"
 #include "InitMask.h"
 #include "ChanVeseSchemes.h"
-//#include "Util.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -39,44 +39,22 @@ int main(int argc, char** argv)
   system("rm -f ./Results/*.vtk");
 
   // Lecture de l'image
-
-  clock_t t1,t2;
-
-  t1=clock();
   std::cout << "-------------------------------------------------" << std::endl;
   std::cout << "Lecture de l'image " << c.imageName << std::endl;
   Image* image = new Image();
   image->ReadImage(c.imageName);
   saveVTKFile(image->GetImage(), "Results/image.vtk");
   std::cout << "-------------------------------------------------" << std::endl;
-  t2=clock()-t1;
-    cout << "lecture image" << t2*1e-6 << endl;
-
-
-
 
   // Initialisation ou lecture du masque redistancié
-
-  clock_t t3,t4;
-
-  t3=clock();
-
   std::cout << "-------------------------------------------------" << std::endl;
   std::cout << "Construction ou lecture du masque redistancié" << std::endl;
   InitMask* initMask = new InitMask();
   int rows(image->GetImage().rows()), cols(image->GetImage().cols());
   initMask->BuildMaskAndRedistancing(rows, cols, imagemaskdistance);
   std::cout << "-------------------------------------------------" << std::endl;
-  t4=clock()-t3;
-  cout << "lecture image" << t4*1e-6 << endl;
-
 
   // Chan Vese method
-
-  clock_t t5,t6;
-
-  t5=clock();
-
   std::cout << "-------------------------------------------------" << std::endl;
   std::cout << "Initialisation de la méthode de Chan Vese" << std::endl;
   ChanVeseSchemes* chanVese=new ChanVeseSchemes(image);
@@ -130,10 +108,6 @@ int main(int argc, char** argv)
   image->WriteImage(chanVese->AbsGradPhi(newphi), (namewithoutextension + "_filtered_with_contour." + extension).c_str());
 
   cout << "Fin de la segmentation pour l'image." << endl;
-
-  t6 = clock() - t5;
-  cout << "scheme + écriture" << t6*1e-6 << endl;
-
 
   return 0;
 }
