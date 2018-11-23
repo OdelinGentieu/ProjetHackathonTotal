@@ -63,13 +63,32 @@ int main(int argc, char** argv)
   std::cout << "-------------------------------------------------" << std::endl;
 
   std::cout << "Iteration -- 1" << std::endl;
-  field newphi;
+
+  //Recopiage du phi de EIGEN dans un phi Vector
+  std::vector< std::vector<double> >  phi_v;
+
+  phi_v.resize(phi.rows());
+  for (int i=0;i< ;i++) { phi_v[i].resize(phi.cols()); }
+
+  for (int i=0 ; i< phi.rows(); i++)
+  {
+    for (int j=0 ; j< phi.cols(); j++)
+    {
+      phi_v[i][j]=phi(i,j);
+    }
+  }
+
+  std::vector< std::vector <double> > newphi_v;
+
+  newphi_v.resize(phi.rows());
+  for (int i=0;i< ;i++) { phi_v[i].resize(phi.cols()); }
 
   std::string scheme(c.scheme);
+
   if (scheme == "ExplicitScheme")
   {
     std::cout << "Explicit scheme" << std::endl;
-    newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+    newphi_v = chanVese->ExplicitScheme(phi_v,c.dt,c.mu,c.nu,c.l1,c.l2);
   }
   else
   {
