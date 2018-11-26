@@ -88,10 +88,10 @@ field ChanVeseSchemes::AbsGradPhi(const field& phi) const
 {
   const double hx(1.), hy(1.0);
 
-  field dxplus  = ( CSXPshift(phi) - phi ) / (hx);
-  field dxminus = ( phi - CSXMshift(phi) ) / (hx);
-  field dyplus  = ( CSYPshift(phi) - phi ) / (hy);
-  field dyminus = ( phi - CSYMshift(phi) ) / (hy);
+  field dxplus    = ( CSXPshift(phi) - phi ) / (hx);
+  field dxminus   = ( phi - CSXMshift(phi) ) / (hx);
+  field dyplus    = ( CSYPshift(phi) - phi ) / (hy);
+  field dyminus   = ( phi - CSYMshift(phi) ) / (hy);
   field dxcentral = (dxplus+dxminus) / 2.;
   field dycentral = (dyplus+dyminus) / 2.;
 
@@ -99,7 +99,22 @@ field ChanVeseSchemes::AbsGradPhi(const field& phi) const
 }
 
 
+double ChanVeseSchemes::fdiff(const std::vector<std::vector<double>>& phi_v, const std::vector<std::vector<double>>& newphi_v) const
+{
+	double d=0.;
 
+	for (int i=0; i<newphi_v.size(); i++)
+	{
+		for (int j=0; j<newphi_v[0].size(); j++)
+		{
+			d+= 4.*max( -phi_v[i][j]*newphi_v[i][j]/max(-phi_v[i][j]*newphi_v[i][j], 1.E-16) , 0. );
+			//Petite modif par rapport au code d'origine : lorsque phi ou newphi était nul et l'autre étais négatif, d était incrémenté de 4.
+		}
+	}
+	double diff = sqrt(d)/(newphi_v.size()*newphi_v[0].size());
+
+	return diff;
+}
 
 std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vector<std::vector<double>>& phi_v, const double dt,  const double mu, const double nu, const double l1, const double l2) const
 {
@@ -125,13 +140,13 @@ std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vec
     {
       for (int j=0; j<ny ; j++)
 			{
-	  		dom_plus += max (phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
-  			dom_moins -= max (-phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
+	  		dom_plus += max(phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
+  			dom_moins-= max(-phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
   			//le max au dénominateur sert à ne jamais diviser par 0
 	  		//dom_plus est le nombre d'éléments positifs dans phi
 	  		//dom_moins est le nombre d'éléments négatifs dans phi
-	  		z_plus += max (_u0_v[i][j]*phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
-  			z_moins -= max (-_u0_v[i][j]*phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
+	  		z_plus   += max(_u0_v[i][j]*phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
+  			z_moins  -= max(-_u0_v[i][j]*phi_v[i][j]/max(abs(phi_v[i][j]),1.E-16),0.);
 	  		//z_plus est la valeur de l'intégrale de z sur tous les phi(i,j) positifs
 	  		//z_moins est la valeur de l'intégrale de z sur tous les phi(i,j) négatifs
 			}
@@ -162,10 +177,10 @@ std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vec
 			}
     }
 
-  GrosPhi_v[0][0]       = phi_v[0][0];
-  GrosPhi_v[0][ny+1]    = phi_v[0][ny-1];
-  GrosPhi_v[nx+1][0]    = phi_v[nx-1][0];
-  GrosPhi_v[nx+1][ny+1] = phi_v[nx-1][ny-1];
+  GrosPhi_v[0][0]        = phi_v[0][0];
+  GrosPhi_v[0][ny+1]     = phi_v[0][ny-1];
+  GrosPhi_v[nx+1][0]     = phi_v[nx-1][0];
+  GrosPhi_v[nx+1][ny+1]  = phi_v[nx-1][ny-1];
 
   //FIN GrosPhi_v
 
@@ -173,19 +188,19 @@ std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vec
     {
       for (int j=1; j<ny+1; ++j)
 			{
-	  		double firstterm  = (fdxplus(i,j,GrosPhi_v,hx)*coeffA(i,j,GrosPhi_v,hx,hy,eta) - fdxminus(i,j,GrosPhi_v,hx)*coeffA(i-1,j,GrosPhi_v,hx,hy,eta))/hx;
-	  		double secondterm = (fdyplus(i,j,GrosPhi_v,hy)*coeffB(i,j,GrosPhi_v,hx,hy,eta) - fdyminus(i,j,GrosPhi_v,hy)*coeffB(i,j-1,GrosPhi_v,hx,hy,eta))/hy;
+	  		double firstterm   = (fdxplus(i,j,GrosPhi_v,hx)*coeffA(i,j,GrosPhi_v,hx,hy,eta) - fdxminus(i,j,GrosPhi_v,hx)*coeffA(i-1,j,GrosPhi_v,hx,hy,eta))/hx;
+	  		double secondterm  = (fdyplus(i,j,GrosPhi_v,hy)*coeffB(i,j,GrosPhi_v,hx,hy,eta) - fdyminus(i,j,GrosPhi_v,hy)*coeffB(i,j-1,GrosPhi_v,hx,hy,eta))/hy;
 	  		double eps(3.);
 	  		double diracij;
-	  		double correc = -l1*(_u0(i-1,j-1)-C1)*(_u0(i-1,j-1)-C1) + l2*(_u0(i-1,j-1)-C2)*(_u0(i-1,j-1)-C2);
-	  		diracij = eps/(GrosPhi_v[i][j]*GrosPhi_v[i][j]+eps*eps);
+	  		double correc      = -l1*(_u0(i-1,j-1)-C1)*(_u0(i-1,j-1)-C1) + l2*(_u0(i-1,j-1)-C2)*(_u0(i-1,j-1)-C2);
+	  		diracij            = eps/(GrosPhi_v[i][j]*GrosPhi_v[i][j]+eps*eps);
 	  		newphi_v[i-1][j-1] = GrosPhi_v[i][j] + dt*diracij*(mu*(firstterm+secondterm)- nu + correc);
 			}
     }
 
   return newphi_v;
 
-  ////////////////// OLD STAFF ///////////////////
+  ////////////////// OLD STUFF ///////////////////
 
   // // Différences à gauche, à droite et centrées
   // field dxplus  = ( CSXPshift(phi) - phi ) / (hx);

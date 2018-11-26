@@ -68,11 +68,11 @@ int main(int argc, char** argv)
   std::vector< std::vector<double> >  phi_v;
 
   phi_v.resize(phi.rows());
-  for (int i=0;i< ;i++) { phi_v[i].resize(phi.cols()); }
+  for (int i=0;i<phi.rows() ;i++) { phi_v[i].resize(phi.cols()); }
 
-  for (int i=0 ; i< phi.rows(); i++)
+  for (int i=0 ; i < phi.rows(); i++)
   {
-    for (int j=0 ; j< phi.cols(); j++)
+    for (int j=0 ; j < phi.cols(); j++)
     {
       phi_v[i][j]=phi(i,j);
     }
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
   std::vector< std::vector <double> > newphi_v;
 
   newphi_v.resize(phi.rows());
-  for (int i=0;i< ;i++) { phi_v[i].resize(phi.cols()); }
+  for (int i=0;i<newphi_v ;i++) { phi_v[i].resize(phi.cols()); }
 
   std::string scheme(c.scheme);
 
@@ -89,15 +89,30 @@ int main(int argc, char** argv)
   {
     std::cout << "Explicit scheme" << std::endl;
     newphi_v = chanVese->ExplicitScheme(phi_v,c.dt,c.mu,c.nu,c.l1,c.l2);
+// CL
+    int nx= phi.size();
+    int ny= phi[0].size();
+
+    for (int j=0; j<ny; ++j)
+    {
+      newphi[0][j]  = newphi[1][j];
+      newphi[nx][j] = newphi[nx-1][j];
+    }
+
+    for (int i=0; i<nx; ++i)
+    {
+      newphi[i][0]  = newphi[i][1];
+      newphi[i][ny] = newphi[i][ny-1];
+    }
+// Fin CL
   }
   else
   {
     std::cout << "Seulement le schéma ExplicitScheme est implémenté." << std::endl;
   }
-
-  double diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
-                /(phi.rows()*phi.cols());
-
+  double diff = chanVese->fdiff(newphi_v);
+  // double diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
+                // /(phi.rows()*phi.cols());
   phi = newphi;
   int i(2);
   while ( (diff > 5e-6) && (i < 100) )
@@ -106,10 +121,10 @@ int main(int argc, char** argv)
     if (scheme == "ExplicitScheme")
     {
       newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
-    }
 
-    diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
-                  /(phi.rows()*phi.cols());
+    diff = chanVese->fdiff(newphi_v);
+    // diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
+                  // /(phi.rows()*phi.cols());
     if (i%10 == 0)
     {
       newphi = ((newphi>=0).cast<double>()-0.5)*2;
