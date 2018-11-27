@@ -9,6 +9,8 @@
 #include "Dense"
 #include <iostream>
 #include <fstream>
+#include <vector>
+//#include "Image.h"
 
 typedef Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic> field;
 
