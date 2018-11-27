@@ -18,11 +18,11 @@ PROGFilter = mainFilter
 PROGSegmentation = mainSegmentation
 
 # Les fichiers source à compiler
-SRC = LevelSet.cpp InitMask.cpp ChanVeseSchemes.cpp Image.cpp Util.cpp
+SRC = LevelSet.cpp InitMask.cpp ChanVeseSchemes.cpp Image.cpp Util.cpp LevelSet_v.cpp
 SRCMainFilter = mainFilter.cc
 SRCMainSegmen = mainSegmentation.cc
 SRCCompilFilter = mainFilter.o LevelSet.o InitMask.o ChanVeseSchemes.o Image.o Util.o
-SRCCompilSegmen = mainSegmentation.o LevelSet.o InitMask.o ChanVeseSchemes.o Image.o Util.o
+SRCCompilSegmen = mainSegmentation.o LevelSet.o InitMask.o ChanVeseSchemes.o Image.o Util.o LevelSet_v.o
 
 # La commande complète : compile seulement si un fichier a été modifié
 $(PROGSegmentation) : $(SRC) $(SRCMainSegmen)
