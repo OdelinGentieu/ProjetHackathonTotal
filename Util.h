@@ -29,7 +29,6 @@ typedef struct
 void parseFile(char* filename, config_t& c);
 
 void saveVTKFile(const field& phi, std::string saveSolFileName);
-void saveVTKFile(std::vector<std::vector<double>>& phi_v, std::string saveSolFileName);
 
 void readVTKFile(field& phi, std::string fileName);
 
