@@ -101,12 +101,22 @@ field ChanVeseSchemes::AbsGradPhi(const field& phi) const
 
 double ChanVeseSchemes::fdiff(const std::vector<std::vector<double>>& phi_v, const std::vector<std::vector<double>>& newphi_v) const
 {
+	// diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()/(phi.rows()*phi.cols());
 	double d=0.;
 
 	for (int i=0; i<newphi_v.size(); i++)
 	{
 		for (int j=0; j<newphi_v[0].size(); j++)
 		{
+			// if (phi_v[i][j] >= 0. && newphi_v[i][j] <0.)
+			// {
+			// 	d+= 4;
+			// };
+			// if (phi_v[i][j]< 0. && newphi_v[i][j] >=0.)
+			// {
+			// 	d+=4;
+			// };
+
 			d+= 4.*max( -phi_v[i][j]*newphi_v[i][j]/max(-phi_v[i][j]*newphi_v[i][j], 1.E-16) , 0. );
 			//Petite modif par rapport au code d'origine : lorsque phi ou newphi était nul et l'autre étais négatif, d était incrémenté de 4.
 		}

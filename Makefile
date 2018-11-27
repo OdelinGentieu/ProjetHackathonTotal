@@ -11,7 +11,7 @@ DEBUG_FLAG = -g3 -DDEBUG  -I Eigen/Eigen -ltiff -lm -lpthread -std=c++11 -w
 LIB = -ltiff -lm -lpthread
 
 # On choisit comment on compile
-CXX_FLAGS = $(DEBUG_FLAG)
+CXX_FLAGS = $(OPTIM_FLAG)
 
 # Le nom de l'exécutable
 PROGFilter = mainFilter

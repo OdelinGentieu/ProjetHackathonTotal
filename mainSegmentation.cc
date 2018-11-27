@@ -116,7 +116,7 @@ int main(int argc, char** argv)
         // newphi = ((newphi>=0).cast<double>()-0.5)*2;
         for (int i=0 ; i < newphi_v.size(); i++)
         {
-          for (int j=0 ; j < newphi_v.size(); j++)
+          for (int j=0 ; j < newphi_v[0].size(); j++)
           {
             newphi_v[i][j]=newphi_v[i][j]/abs(newphi_v[i][j]);
           }
@@ -132,10 +132,10 @@ int main(int argc, char** argv)
     }
   }
 
-  field newphi;
-  for (int i=0 ; i < phi.rows(); i++)
+  field newphi(phi_v.size(),phi_v[0].size());
+  for (int i=0 ; i < newphi_v.size(); i++)
   {
-    for (int j=0 ; j < phi.cols(); j++)
+    for (int j=0 ; j < newphi_v[0].size(); j++)
     {
       newphi(i,j) = phi_v[i][j];
     }
