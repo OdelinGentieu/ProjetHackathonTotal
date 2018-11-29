@@ -32,7 +32,6 @@ ChanVeseSchemes::ChanVeseSchemes (Image* image) : _u0(image->GetImage())
 	}
 }
 
-
 // Dérivées partielles
 field ChanVeseSchemes::CSXPshift(const field& phi) const
 {
@@ -96,13 +95,11 @@ field ChanVeseSchemes::AbsGradPhi(const field& phi) const
 	field dxcentral = (dxplus+dxminus) / 2.;
 	field dycentral = (dyplus+dyminus) / 2.;
 
-
 	return sqrt(dxcentral*dxcentral + dycentral*dycentral);
 }
 
 
-// Valeur moyenne du domaine
-double ChanVeseSchemes::ComputeMeanValueOnDomain(const field& phi) const
+double ChanVeseSchemes::fdiff(const std::vector<std::vector<double>>& phi_v, const std::vector<std::vector<double>>& newphi_v) const
 {
 	// diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()/(phi.rows()*phi.cols());
 	double d=0.;
@@ -126,23 +123,10 @@ double ChanVeseSchemes::ComputeMeanValueOnDomain(const field& phi) const
 	}
 	double diff = sqrt(d)/(newphi_v.size()*newphi_v[0].size());
 
-
-
-field ChanVeseSchemes::Correction(const field& phi, const double lambda1, const double lambda2) const
-{
-  double Cmin(ComputeMeanValueOnDomain(phi)), Cmax(ComputeMeanValueOnComplementaryDomain(phi));
-  if (Cmax < Cmin)
-  {
-    double temp = Cmin;
-    Cmin = Cmax; Cmax = temp;
-  }
-  field correc_term_1 = (_u0-Cmin)*(_u0-Cmin);
-  field correc_term_2 = (_u0-Cmax)*(_u0-Cmax);
-  field correc_term = (-lambda1*correc_term_1+lambda2*correc_term_2);
-  return correc_term;
+	return diff;
 }
 
-field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const double mu, const double nu, const double l1, const double l2) const
+std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vector<std::vector<double>>& phi_v, const double dt,  const double mu, const double nu, const double l1, const double l2) const
 {
 	const double hx(1.), hy(1.0);
 	const double eta(1e-8);
@@ -255,8 +239,6 @@ field ChanVeseSchemes::ExplicitScheme(const field& phi, const double dt,  const 
 	// cout << "Dirac " << dirac(0,0) << endl;
 	//
 	// return newphi;
-
-
 }
 
 
