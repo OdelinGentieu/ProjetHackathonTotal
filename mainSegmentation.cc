@@ -10,6 +10,7 @@
 #include "InitMask.h"
 #include "ChanVeseSchemes.h"
 #include "Util.h"
+#include "LevelSet_v.h"
 
 using namespace std;
 
@@ -63,23 +64,42 @@ int main(int argc, char** argv)
   std::cout << "-------------------------------------------------" << std::endl;
 
   std::cout << "Iteration -- 1" << std::endl;
-  field newphi;
+
+  //Recopiage du phi de EIGEN dans un phi Vector
+  std::vector< std::vector<double> >  phi_v;
+
+  phi_v.resize(phi.rows());
+  for (int i=0;i<phi.rows() ;i++) { phi_v[i].resize(phi.cols()); }
+
+  for (int i=0 ; i < phi.rows(); i++)
+  {
+    for (int j=0 ; j < phi.cols(); j++)
+    {
+      phi_v[i][j]=phi(i,j);
+    }
+  }
+
+  std::vector< std::vector <double> > newphi_v;
+
+  newphi_v.resize(phi.rows());
+  for (int i=0;i<newphi_v.size() ;i++) { phi_v[i].resize(phi.cols()); }
 
   std::string scheme(c.scheme);
+
   if (scheme == "ExplicitScheme")
   {
     std::cout << "Explicit scheme" << std::endl;
-    newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+    newphi_v = chanVese->ExplicitScheme(phi_v,c.dt,c.mu,c.nu,c.l1,c.l2);
+
   }
   else
   {
     std::cout << "Seulement le schéma ExplicitScheme est implémenté." << std::endl;
   }
-
-  double diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
-                /(phi.rows()*phi.cols());
-
-  phi = newphi;
+  double diff = chanVese->fdiff(phi_v, newphi_v);
+  // double diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
+  // /(phi.rows()*phi.cols());
+  phi_v = newphi_v;
   int i(2);
   while ( (diff > 5e-6) && (i < 100) )
   {
@@ -109,25 +129,18 @@ int main(int argc, char** argv)
       }
       phi_v = newphi_v;
       i++;
-
     }
+  }
 
   field newphi(phi_v.size(),phi_v[0].size());
   for (int i=0 ; i < newphi_v.size(); i++)
   {
     for (int j=0 ; j < newphi_v[0].size(); j++)
-
     {
-      newphi = ((newphi>=0).cast<double>()-0.5)*2;
-      LevelSet lv(newphi);
-      cout << "Redistanciation... " << endl;
-      lv.redistancing(10);
-      saveVTKFile(newphi, ("Results/sol_" + to_string(i)+ ".vtk").c_str());
-      std::cout << "Evolution of phi : " << diff << std::endl;
+      newphi(i,j) = phi_v[i][j];
     }
-    phi = newphi;
-    i++;
   }
+
   newphi = ((newphi>=0).cast<double>()-0.5)*2;
   saveVTKFile(newphi, "Results/lastsol.vtk");
   image->WriteImage(chanVese->AbsGradPhi(newphi), (namewithoutextension + "_filtered_with_contour." + extension).c_str());
@@ -136,3 +149,20 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
+// // CL
+// int nx= phi_v.size();
+// int ny= phi_v[0].size();
+//
+// for (int j=0; j<ny; ++j)
+// {
+//   newphi[0][j]  = newphi[1][j];
+//   newphi[nx][j] = newphi[nx-1][j];
+// }
+//
+// for (int i=0; i<nx; ++i)
+// {
+//   newphi[i][0]  = newphi[i][1];
+//   newphi[i][ny] = newphi[i][ny-1];
+// }
+// // Fin CL

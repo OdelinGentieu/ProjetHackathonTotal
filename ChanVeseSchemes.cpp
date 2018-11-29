@@ -146,6 +146,8 @@ std::vector<std::vector<double>>  ChanVeseSchemes::ExplicitScheme(const std::vec
 	// Calcul de C1 et C2
 	double dom_plus=0., dom_moins=0, z_plus=0., z_moins=0., C1, C2;
 
+	#pragma acc kernels
+
 	for (int i=0; i<nx ; i++)
 	{
 		for (int j=0; j<ny ; j++)
