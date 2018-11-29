@@ -5,7 +5,7 @@ CC = mpic++
 OPTIM_FLAG = -O3 -DNDEBUG -w -I Eigen/Eigen -std=c++11
 
 # Options en mode debug - La variable DEBUG est définie comme vraie
-DEBUG_FLAG = -g -DDEBUG  -I Eigen/Eigen -ltiff -lm -lpthread -std=c++11
+DEBUG_FLAG = -g3 -DDEBUG  -I Eigen/Eigen -ltiff -lm -lpthread -std=c++11 -w
 
 # Librairies à linker (création executable)
 LIB = -ltiff -lm -lpthread

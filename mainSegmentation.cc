@@ -86,12 +86,37 @@ int main(int argc, char** argv)
     if (i%10 == 0) { std::cout << "Iteration -- " << i << std::endl;}
     if (scheme == "ExplicitScheme")
     {
-      newphi = chanVese->ExplicitScheme(phi,c.dt,c.mu,c.nu,c.l1,c.l2);
+      newphi_v = chanVese->ExplicitScheme(phi_v,c.dt,c.mu,c.nu,c.l1,c.l2);
+
+      diff = chanVese->fdiff(phi_v, newphi_v);
+      // diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
+      // /(phi.rows()*phi.cols());
+      if (i%10 == 0)
+      {
+        // newphi = ((newphi>=0).cast<double>()-0.5)*2;
+        for (int i=0 ; i < newphi_v.size(); i++)
+        {
+          for (int j=0 ; j < newphi_v[0].size(); j++)
+          {
+            newphi_v[i][j]=newphi_v[i][j]/abs(newphi_v[i][j]);
+          }
+        }
+        LevelSet_v lv_v(newphi_v);
+        cout << "Redistanciation... " << endl;
+        lv_v.redistancing_v(10);
+        saveVTKFile(newphi_v, ("Results/sol_" + to_string(i)+ ".vtk").c_str());
+        std::cout << "Evolution of phi : " << diff << std::endl;
+      }
+      phi_v = newphi_v;
+      i++;
+
     }
 
-    diff = (((newphi>=0).cast<double>()-0.5)*2. - ((phi>=0).cast<double>()-0.5)*2.).matrix().norm()
-                  /(phi.rows()*phi.cols());
-    if (i%10 == 0)
+  field newphi(phi_v.size(),phi_v[0].size());
+  for (int i=0 ; i < newphi_v.size(); i++)
+  {
+    for (int j=0 ; j < newphi_v[0].size(); j++)
+
     {
       newphi = ((newphi>=0).cast<double>()-0.5)*2;
       LevelSet lv(newphi);
