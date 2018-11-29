@@ -45,3 +45,6 @@ all : $(PROGFilter) $(PROGSegmentation)
 # temporaires de sauvegarde (~)
 clean :
 	rm -f *.o *~ $(PROGFilter) *~ $(PROGSegmentation)
+	rm -rf ../Images/fileint1_aft_preprocess_filtered.tiff                                       
+	rm -rf ../Images/fileint1_aft_preprocess_filtered_distance_mask.vtk                          
+	rm -rf ../Images/fileint1_aft_preprocess_filtered_with_contour.tiff
