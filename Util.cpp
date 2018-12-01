@@ -69,7 +69,7 @@ void saveVTKFile(const field& phi, std::string saveSolFileName)
 
 
 // Écriture d'une matrice ou d'un tableau dans un fichier
-void saveVTKFile(std::vector<std::vector<double>>& phi_v, std::string saveSolFileName)
+void saveVTKFile(std::vector< std::vector<double> >& phi_v, std::string saveSolFileName)
 {
   ofstream saveSol;
   saveSol.open(saveSolFileName, ios::out);

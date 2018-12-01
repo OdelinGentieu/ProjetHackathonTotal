@@ -22,14 +22,11 @@ public:
 
 	Image();
 
-  field CutImage (int me, int np, std::string name);
+	field CutImage (int me, int np, std::string name);
 
 	void ReadImage(std::string filename);
 	void WriteImage(const field& abs_grad_phi, std::string filename);
-	void Load(int me, int &i0, int &i1, int Ny, int np);
 
-	int GetI0(int me, int np, int Ny);
-	int GetI1(int me, int np, int Ny);
 	void Dimensions(std::string filename, int &Nx, int &Ny);
 	void LocalLoading(field &M, int i0, int i1, std::string filename);
 	void BuildFilter(field phi, std::string filename, std::string output_file, int me, int np);

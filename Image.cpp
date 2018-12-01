@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include "mpi.h"
 #include <tiffio.h>
 
 #include "Image.h"
@@ -26,48 +25,12 @@ field Image::CutImage(int me, int np, std::string name)
 {
   int Nx, Ny;
   Dimensions(name, Nx, Ny);
-  int i0, i1, Nyloc;
 
-  Load(me, i0, i1, Ny, np);
-  Nyloc = i1-i0+1;
-  _Im.resize(Nx,Nyloc);
-  LocalLoading(_Im, i0, i1, name);
+  _Im.resize(Nx,Ny);
+  LocalLoading(_Im, 0, Ny, name);
   return _Im;
 }
 
-void Image::Load(int me, int &i0, int &i1, int Ny, int np)
-{
-  int q = Ny/np;
-  int r = Ny%np;
-  if(r == 0){
-    i0 = me*q;
-    i1 = (me+1)*q-1;
-  }
-  else{
-    if(me<r){
-      i0 = me*q+me;
-      i1 = q*(me+1)+me;
-    }
-    else{
-      i0 = me*q+r;
-      i1 = i0 + q-1;
-    }
-  }
-}
-
-int Image::GetI0(int me, int np, int Ny)
-{
-  int i0, i1;
-  Load(me, i0, i1, Ny, np);
-  return i0;
-}
-
-int Image::GetI1(int me, int np, int Ny)
-{
-  int i0, i1;
-  Load(me, i0, i1, Ny, np);
-  return i1;
-}
 
 void Image::Dimensions(std::string filename, int &Nx, int &Ny)
 {
@@ -87,149 +50,113 @@ void Image::BuildFilter(field phi, std::string filename, std::string output_file
   int entree;
   entree = 0;
 
-  while (test == false)
-  {
-
-    if (me == entree)
+  tif = TIFFOpen(output_file.c_str(), "a");
+  TIFFSetDirectory(tif, 0);
+  TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, Nx);
+  TIFFSetField(tif, TIFFTAG_IMAGELENGTH, Ny);
+  TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+  TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+  TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+  TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+  TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
+  TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+  TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_NONE);
+  TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+  
+  unsigned char* v = new unsigned char[Nx];
+  for(int j=0; j<Ny; j++)
     {
-      tif = TIFFOpen(output_file.c_str(), "a");
-      TIFFSetDirectory(tif, 0);
-      TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, Nx);
-      TIFFSetField(tif, TIFFTAG_IMAGELENGTH, Ny);
-      TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
-      TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-      TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-      TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
-      TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_NONE);
-      TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-      if (me == 0)
-      {
-        unsigned char* v = new unsigned char[Nx];
-        for(int j=0; j<Ny; j++)
-        {
-          for(int i=0; i<Nx; i++)
-          {
-            v[i] = 255;
-          }
-          TIFFWriteScanline(tif, v, j);
-        }
-      }
-      int Nyloc, i0, i1;
-      Load(me, i0, i1, Ny, np);
-      Nyloc = i1-i0+1;
+      for(int i=0; i<Nx; i++)
+	{
+	  v[i] = 255;
+	}
+      TIFFWriteScanline(tif, v, j);
+    }
 
-      unsigned char* v = new unsigned char[Nx];
-      for(int j=0; j<Nyloc; j++)
-      {
-        for(int i=0; i<Nx; i++)
+  for(int j=0; j<Ny; j++)
+    {
+      for(int i=0; i<Nx; i++)
         {
           v[i] = phi(i,j);
         }
-        TIFFWriteScanline(tif, v, j+i0);
-      }
-      TIFFClose(tif);
+      TIFFWriteScanline(tif, v, j);
     }
-    entree = entree + 1;
-    if (entree==np)
-    {
-      test = true;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
+  TIFFClose(tif);
+ 
 }
 
 
 void Image::CreateFull(field phi, std::string filename, std::string output_file, int me, int np)
 {
-  int Nx, Ny,i0,i1, Nyloc;
+  int Nx, Ny;
   Dimensions(filename, Nx, Ny);
   TIFF * tif;
 
-  bool test;
-  test =false;
-  int entree;
-  entree = 0;
-
-  Load(me,i0, i1,Ny,np);
-  Nyloc =i1-i0+1;
   field M;
-  M.resize(Nx, Nyloc);
+  M.resize(Nx, Ny);
 
-  LocalLoading(M, i0, i1, filename);
+  LocalLoading(M, 0, Ny, filename);
 
-  for (int j=1; j<Nyloc-1; j++)
-  {
-    for (int i=1; i<Nx-1; i++)
+  for (int j=1; j<Ny-1; j++)
     {
-      if( (phi(i,j)<0) && (phi(i-1,j)>0) )
-      {M(i,j)=255;
-      }
-      else if ((phi(i,j)<0) && (phi(i+1,j)>0))
-      {M(i,j)=255;
-      }
-      else if((phi(i,j)<0) && (phi(i,j-1)>0))
-      {M(i,j)=255;
-      }
-      else if ((phi(i,j)<0) && (phi(i,j+1)>0))
-      {M(i,j)=255;
-      }
+      for (int i=1; i<Nx-1; i++)
+	{
+	  if( (phi(i,j)<0) && (phi(i-1,j)>0) )
+	    {M(i,j)=255;
+	    }
+	  else if ((phi(i,j)<0) && (phi(i+1,j)>0))
+	    {M(i,j)=255;
+	    }
+	  else if((phi(i,j)<0) && (phi(i,j-1)>0))
+	    {M(i,j)=255;
+	    }
+	  else if ((phi(i,j)<0) && (phi(i,j+1)>0))
+	    {M(i,j)=255;
+	    }
+	}
     }
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
 
 
-  while (test == false)
-  {
 
-    if (me == entree)
+  tif = TIFFOpen(output_file.c_str(), "a");
+  TIFFSetDirectory(tif, 0);
+  TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, Nx);
+  TIFFSetField(tif, TIFFTAG_IMAGELENGTH, Ny);
+  TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+  TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+  TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+  TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+  TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
+  TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+  TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_NONE);
+  TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+  if (me == 0)
     {
-      tif = TIFFOpen(output_file.c_str(), "a");
-      TIFFSetDirectory(tif, 0);
-      TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, Nx);
-      TIFFSetField(tif, TIFFTAG_IMAGELENGTH, Ny);
-      TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
-      TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
-      TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-      TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-      TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1);
-      TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-      TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_NONE);
-      TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-      if (me == 0)
-      {
-        unsigned char* v = new unsigned char[Nx];
-        for(int j=0; j<Ny; j++)
+      unsigned char* v = new unsigned char[Nx];
+      for(int j=0; j<Ny; j++)
         {
           for(int i=0; i<Nx; i++)
-          {
-            v[i] = 255;
-          }
+	    {
+	      v[i] = 255;
+	    }
           TIFFWriteScanline(tif, v, j);
         }
-      }
+    }
 
 
 
-      unsigned char* v = new unsigned char[Nx];
-      for(int j=0; j<Nyloc; j++)
-      {
-        for(int i=0; i<Nx; i++)
+  unsigned char* v = new unsigned char[Nx];
+  for(int j=0; j<Ny; j++)
+    {
+      for(int i=0; i<Nx; i++)
         {
           v[i] = M(i,j);
         }
-        TIFFWriteScanline(tif, v, j+i0);
-      }
-      TIFFClose(tif);
+      TIFFWriteScanline(tif, v, j);
     }
-    entree = entree + 1;
-    if (entree==np)
-    {
-      test = true;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
+  TIFFClose(tif);
+ 
+
 }
 
 void Image::LocalLoading(field& M, int i0, int i1, string filename)
@@ -267,17 +194,13 @@ void Image::LocalLoading(field& M, int i0, int i1, string filename)
 
 void Image::ApplyMedianFilter(const int windows_size,const double seuil, string filename, int me, int np)
 {
-  MPI_Status Status2;
+
   bool test;
   test =false;
 
-  int Nx, Ny, i0, i1, Nyloc, entree, tag;
-  tag = 1000;
-  entree = 0;
+  int Nx, Ny;
   Dimensions(filename, Nx, Ny);
-  Load(me,i0, i1,Ny,np);
-  Nyloc =i1-i0+1;
-
+  
   double max, min;
 
   std::vector<double> windows_vector(int(pow(2*windows_size+1,2)));
@@ -286,37 +209,30 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
 
   // Matrice réduite de taille initiale
   field Im_reduit;
-  Im_reduit.resize(Nx,Nyloc);
+  Im_reduit.resize(Nx,Ny);
 
   _Im_u0.resize(Nx,Ny);
 
 
-
+  me=0;np=0;
 
   //std::cout << "L'image traitée par le filtre médian est de taille " << Nx << "x" << Ny << std::endl;
 
-  if ((me==0) || (me==np-1))
-  {
-    Nyloc = Nyloc+windows_size;
-  }
-  else
-  {
-    Nyloc = Nyloc+2*windows_size;
-  }
-  _Im_median.resize(Nx,Nyloc);
-  _Im_origin.resize(Nx,Nyloc);
+
+  _Im_median.resize(Nx,Ny);
+  _Im_origin.resize(Nx,Ny);
 
   if(me==0)
   {
-    LocalLoading(_Im_origin, i0, i1+windows_size, filename);
+    LocalLoading(_Im_origin, 0, Ny+windows_size, filename);
   }
   else if (me==np-1)
   {
-    LocalLoading(_Im_origin, i0-windows_size, i1, filename);
+    LocalLoading(_Im_origin, -windows_size, Ny, filename);
   }
   else
   {
-    LocalLoading(_Im_origin, i0-windows_size, i1+windows_size, filename);
+    LocalLoading(_Im_origin, -windows_size, Ny+windows_size, filename);
   }
 
 
@@ -326,24 +242,24 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
   if (me==0)
   {
     a = 0;
-    b = Nyloc-windows_size;
+    b = Ny-windows_size;
   }
   else if (me==np-1)
   {
     a = windows_size;
-    b = Nyloc;
+    b = Ny;
   }
   else
   {
     a = windows_size;
-    b = Nyloc-windows_size;
+    b = Ny-windows_size;
   }
 
   for(int i=0; i<Nx; i++)
   {
     for(int j=a; j<b; j++)
     {
-      if ((i<windows_size) || (i>=Nx-windows_size) || (j<windows_size) || (j>=Nyloc-windows_size))
+      if ((i<windows_size) || (i>=Nx-windows_size) || (j<windows_size) || (j>=Ny-windows_size))
       {
         _Im_median(i,j)=0;//_Im_origin(i,j); // c'est mieux de rien avoir que d'avoir les pixels d'origine...
       }
@@ -400,7 +316,7 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
 
   for(int i=0;i<Nx;i++)
   {
-    for(int j=0; j<i1-i0+1; j++)
+    for(int j=0; j<Ny+1; j++)
     {
       if (me==0)
       {
@@ -410,7 +326,7 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
       {
         Im_reduit(i,j)=_Im_median(i,j+windows_size);
       }
-      _Im_u0(i,j+i0) = Im_reduit(i,j);
+      _Im_u0(i,j) = Im_reduit(i,j);
     }
   }
   std::string extension(filename);

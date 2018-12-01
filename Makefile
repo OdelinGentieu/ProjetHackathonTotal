@@ -1,17 +1,17 @@
 # Compilateur Utilisé
-CC = mpic++
+CC = pgc++
 
 # Options en mode optimisé - La variable DEBUG est définie comme fausse
-OPTIM_FLAG = -O3 -DNDEBUG -w -I Eigen/Eigen -std=c++11
+OPTIM_FLAG = -O3 -DNDEBUG -w -I Eigen/Eigen 
 
 # Options en mode debug - La variable DEBUG est définie comme vraie
-DEBUG_FLAG = -g3 -DDEBUG  -I Eigen/Eigen -ltiff -lm -lpthread -std=c++11 -w
+DEBUG_FLAG = -DDEBUG  -I Eigen/Eigen -ltiff -lm -lpthread -w -std=c++11
 
 # Librairies à linker (création executable)
 LIB = -ltiff -lm -lpthread
 
 # On choisit comment on compile
-CXX_FLAGS = $(OPTIM_FLAG)
+CXX_FLAGS = $(DEBUG_FLAG)
 
 # Le nom de l'exécutable
 PROGFilter = mainFilter

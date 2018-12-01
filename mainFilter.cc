@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-#include <mpi.h>
 #include "Image.h"
 #include "InitMask.h"
 #include "ChanVeseSchemes.h"
@@ -21,23 +20,19 @@ int main(int argc, char** argv)
     cout << "Please, enter the name of your data file." << endl;
     abort();
   }
-	config_t c;
-	parseFile(argv[1],c);
+  config_t c;
+  parseFile(argv[1],c);
 
-	MPI_Init(NULL,NULL);
-	int me, np;
-	MPI_Comm_rank(MPI_COMM_WORLD, &me);
-	MPI_Comm_size(MPI_COMM_WORLD, &np);
+  int me=0, np=1;
 
-	Image* image=new Image(); //Pointeur vers l'image
+  Image* image=new Image(); //Pointeur vers l'image
 
-  if (me == 0)
-    cout << "Debut du calcul du filtre pour l'image : " << c.imageName << endl;
+  cout << "Debut du calcul du filtre pour l'image : " << c.imageName << endl;
 
-	image->ApplyMedianFilter(c.neighbours,c.coefFilter,c.imageName,me,np);
+  image->ApplyMedianFilter(c.neighbours,c.coefFilter,c.imageName,me,np);
 
-  if (me == 0)
-    cout << "Fin du calcul du filtre pour l'image : " << c.imageName << endl;
+  
+  cout << "Fin du calcul du filtre pour l'image : " << c.imageName << endl;
 
   //image->WriteImage();
 
