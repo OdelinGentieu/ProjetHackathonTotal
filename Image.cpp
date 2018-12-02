@@ -27,7 +27,7 @@ field Image::CutImage(int me, int np, std::string name)
   Dimensions(name, Nx, Ny);
 
   _Im.resize(Nx,Ny);
-  LocalLoading(_Im, 0, Ny, name);
+  LocalLoading(_Im, 0, Ny-1, name);
   return _Im;
 }
 
@@ -44,11 +44,6 @@ void Image::BuildFilter(field phi, std::string filename, std::string output_file
   int Nx, Ny;
   Dimensions(filename, Nx, Ny);
   TIFF * tif;
-
-  bool test;
-  test =false;
-  int entree;
-  entree = 0;
 
   tif = TIFFOpen(output_file.c_str(), "a");
   TIFFSetDirectory(tif, 0);
@@ -95,7 +90,7 @@ void Image::CreateFull(field phi, std::string filename, std::string output_file,
   field M;
   M.resize(Nx, Ny);
 
-  LocalLoading(M, 0, Ny, filename);
+  LocalLoading(M, 0, Ny-1, filename);
 
   for (int j=1; j<Ny-1; j++)
     {
@@ -215,24 +210,25 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
 
 
   me=0;np=0;
+  int Nyloc = Ny+windows_size;
 
   //std::cout << "L'image traitée par le filtre médian est de taille " << Nx << "x" << Ny << std::endl;
 
 
-  _Im_median.resize(Nx,Ny);
-  _Im_origin.resize(Nx,Ny);
+  _Im_median.resize(Nx,Ny+windows_size);
+  _Im_origin.resize(Nx,Ny+windows_size);
 
   if(me==0)
   {
-    LocalLoading(_Im_origin, 0, Ny+windows_size, filename);
+    LocalLoading(_Im_origin, 0, Ny+windows_size-1, filename);
   }
   else if (me==np-1)
   {
-    LocalLoading(_Im_origin, -windows_size, Ny, filename);
+    LocalLoading(_Im_origin, -windows_size, Ny-1, filename);
   }
   else
   {
-    LocalLoading(_Im_origin, -windows_size, Ny+windows_size, filename);
+    LocalLoading(_Im_origin, -windows_size, Ny+windows_size-1, filename);
   }
 
 
@@ -242,24 +238,24 @@ void Image::ApplyMedianFilter(const int windows_size,const double seuil, string 
   if (me==0)
   {
     a = 0;
-    b = Ny-windows_size;
+    b = Nyloc-windows_size;
   }
   else if (me==np-1)
   {
     a = windows_size;
-    b = Ny;
+    b = Nyloc;
   }
   else
   {
     a = windows_size;
-    b = Ny-windows_size;
+    b = Nyloc-windows_size;
   }
 
   for(int i=0; i<Nx; i++)
   {
     for(int j=a; j<b; j++)
     {
-      if ((i<windows_size) || (i>=Nx-windows_size) || (j<windows_size) || (j>=Ny-windows_size))
+      if ((i<windows_size) || (i>=Nx-windows_size) || (j<windows_size) || (j>=Nyloc-windows_size))
       {
         _Im_median(i,j)=0;//_Im_origin(i,j); // c'est mieux de rien avoir que d'avoir les pixels d'origine...
       }
